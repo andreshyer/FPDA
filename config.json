@@ -1,0 +1,79 @@
+{
+    "directory": "data",
+    "drop_profiles": {
+        "bond_number_range": [0.1, 0.35],
+        "min_worthington_number": 0.35,
+        "delta_s": 1e-3,
+        "N": 1e5
+    },
+    "image_parameters": {
+        "img_size_pix": 128,
+        "rotation_range_degrees": [-10, 10],
+        "drop_scale_range": [0.5, 1],
+        "N": 1e6
+    },
+    "model_parameters": {
+        "epochs": 10,
+        "batch_size": 256,
+        "train_percent": 0.8,
+        "val_percent": 0.1
+    },
+    "models" : [
+        {
+            "name": "control",
+            "noise": 0,
+            "rel_capillary_height_range": [0, 0],
+            "prob_capillary_zero": 1,
+            "only_keep_drop_above_apex": false
+        },
+        {
+            "name": "noise",
+            "noise": 0.01,
+            "rel_capillary_height_range": [0, 0],
+            "prob_capillary_zero": 1,
+            "only_keep_drop_above_apex": false
+        },
+        {
+            "name": "capillary",
+            "noise": 0,
+            "rel_capillary_height_range": [0, 1.5],
+            "prob_capillary_zero": 0.15,
+            "only_keep_drop_above_apex": false
+        },
+        {
+            "name": "top",
+            "noise": 0.01,
+            "rel_capillary_height_range": [0, 0],
+            "prob_capillary_zero": 1,
+            "only_keep_drop_above_apex": true
+        },
+        {
+            "name": "noise_capillary",
+            "noise": 0.01,
+            "rel_capillary_height_range": [0, 1.5],
+            "prob_capillary_zero": 0.15,
+            "only_keep_drop_above_apex": false
+        },
+        {
+            "name": "noise_top",
+            "noise": 0.01,
+            "rel_capillary_height_range": [0, 0],
+            "prob_capillary_zero": 1,
+            "only_keep_drop_above_apex": true
+        },
+        {
+            "name": "capillary_top",
+            "noise": 0,
+            "rel_capillary_height_range": [0, 1.5],
+            "prob_capillary_zero": 0.15,
+            "only_keep_drop_above_apex": true
+        },
+        {
+            "name": "noise_capillary_top",
+            "noise": 0.01,
+            "rel_capillary_height_range": [0, 1.5],
+            "prob_capillary_zero": 0.15,
+            "only_keep_drop_above_apex": true
+        }
+    ]
+}
