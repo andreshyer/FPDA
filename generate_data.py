@@ -118,6 +118,7 @@ def generate_data(c):
     for model in c["models"]: 
 
         model_path=root_model_directory / model["name"]
+        print(f"training model: {model_path}")
 
         # Train model, collecting y scaler and loss vs epochs
         keras_model, history_data, y_scaler = train(model_path=model_path, 
@@ -137,6 +138,7 @@ def generate_data(c):
     for model in c["models"]:
 
         model_path=root_model_directory / model["name"]
+        print(f"testing model: {model_path}")
         
         # Open data
         keras_model = load_model(model_path / "model")

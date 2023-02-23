@@ -4,7 +4,7 @@ from random import shuffle
 
 from cv2 import imread, cvtColor, COLOR_BGR2GRAY
 from numpy import array, reshape, expand_dims
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 from keras.utils import Sequence
 from keras.models import Sequential
 from keras.callbacks import Callback
@@ -28,7 +28,7 @@ def generate_y_scaler(train_files, y_keys):
     for file in train_files:
         all_y.append(name_to_y(file=file, y_keys=y_keys))
     
-    y_scaler = StandardScaler()
+    y_scaler = MinMaxScaler()
     y_scaler.fit_transform(all_y)
 
     return y_scaler
@@ -104,8 +104,9 @@ def train(model_path, y_keys, epochs, batch_size):
     val_generator = DataGenerator(files=split["val"], y_scaler=y_scaler, y_keys=y_keys, batch_size=batch_size)
 
     model = simple_model(len_y_keys=len(y_keys))
-    history = model.fit(train_generator, epochs=epochs, validation_data=val_generator)
+    history = model.fit(train_generator, epochs=epochs, validation_data=val_generator, callbacks=Callback())
 
+    print(history.history)
     history_data = dict(loss=history.history['loss'], val_loss=history.history['val_loss'])
 
     return model, history_data, y_scaler
