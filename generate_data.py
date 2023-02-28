@@ -1,17 +1,13 @@
 from pathlib import Path
 from os import mkdir, listdir
-from os.path import exists
 from json import load, dump
 from time import sleep
-from shutil import rmtree
 from random import shuffle, uniform, choice
 
 from tqdm import tqdm
 from numpy import savetxt, loadtxt
 from cv2 import imwrite
 from joblib import dump as joblib_dump
-from joblib import load as joblib_load
-from keras.models import load_model
 from matplotlib import pyplot as plt
 from matplotlib import use
 
@@ -113,90 +109,56 @@ def generate_data(c):
         with open(model_directory / "split.json", "w") as f:
             dump(model_split, f, default=str, indent=4)
 
-    # Train models
-    y_keys = ["bond_number", "volume", "area", "cap_diameter" , "drop_radius"]
+    # Train models, and test on numerically generated data test set
+    all_y_keys = ["bond_number", "volume", "area", "cap_diameter" , "drop_radius"]
     for model in c["models"]: 
 
-        model_path=root_model_directory / model["name"]
-        print(f"training model: {model_path}")
+        # Define directories
+        main_model_path=root_model_directory / model["name"]
 
-        # Train model, collecting y scaler and loss vs epochs
-        keras_model, history_data, y_scaler = train(model_path=model_path, 
-                                                    y_keys=y_keys,
-                                                    epochs=c["model_parameters"]["epochs"],
-                                                    batch_size=c["model_parameters"]["batch_size"]
-                                                    )
+        for y_key in all_y_keys:
 
-        # Save data
-        with open(model_path / "y_scaler.save", "wb") as f:
-            joblib_dump(y_scaler, f)
-        with open(model_path / "history.json", "w") as f:
-            dump(history_data, f)
-        keras_model.save(model_path / "model")
+            # Load data split
+            with open(main_model_path / "split.json", "r") as f:
+                data_split = load(f)
 
-    # Test models
-    for model in c["models"]:
+            # Define directory to save model
+            key_model_path=root_model_directory / model["name"] / y_key
+            mkdir(key_model_path)
+            print(f"training model: {key_model_path}")
 
-        model_path=root_model_directory / model["name"]
-        print(f"testing model: {model_path}")
-        
-        # Open data
-        keras_model = load_model(model_path / "model")
-        with open(model_path / "y_scaler.save", "rb") as f:
-            y_scaler = joblib_load(f)
-        with open(model_path / "split.json", "r") as f:
-            y_files = load(f)["test"]
+            # Train model, collecting y scaler and loss vs epochs
+            keras_model, history_data, y_scaler = train(split=data_split,
+                                                        y_key=y_key,
+                                                        epochs=c["model_parameters"]["epochs"],
+                                                        batch_size=c["model_parameters"]["batch_size"]
+                                                        )
+            
+            # Generate Predicted vs Actual data
+            normalized_pva, pva = test(model=keras_model, y_key=y_key, y_scaler=y_scaler, y_files=data_split["test"], batch_size=c["model_parameters"]["batch_size"])
 
-        # Generate Predicted vs Actual data
-        normalized_pva, pva = test(model=keras_model, y_keys=y_keys, y_scaler=y_scaler, y_files=y_files, batch_size=c["model_parameters"]["batch_size"])
+            # Save data
+            with open(key_model_path / "y_scaler.save", "wb") as f:
+                joblib_dump(y_scaler, f)
+            with open(key_model_path / "history.json", "w") as f:
+                dump(history_data, f)
+            keras_model.save(key_model_path / "model")
 
-        # Save pva data
-        
-        # Save individual PVA plots
-        model_pva_path = model_path / "pva_graphs"
-        mkdir(model_pva_path)
-        for i, key in enumerate(y_keys):
-            y = []
-            y_pred = []
-            y_norm = []
-            y_pred_norm = []
+            savetxt(key_model_path / "normalized_pva.csv", normalized_pva, delimiter=",")
+            savetxt(key_model_path / "pva.csv", pva, delimiter=",")
 
-            for j in range(len(pva)):
-                y.append(pva[j][0][i])
-                y_pred.append(pva[j][1][i])
-                y_norm.append(normalized_pva[j][0][i])
-                y_pred_norm.append(normalized_pva[j][1][i])
-
-            plt.scatter(y, y_pred)
-            plt.savefig(model_pva_path / f"{key}_pva.png")
+            plt.scatter(pva[:, 0], pva[:, 1])
+            plt.savefig(key_model_path / f"pva.png")
             plt.close()
 
-            plt.scatter(y_norm, y_pred_norm)
-            plt.savefig(model_pva_path / f"{key}_pva_normalized.png")
+            plt.scatter(normalized_pva[:, 0], normalized_pva[:, 1])
+            plt.savefig(key_model_path / f"pva_normalized.png")
             plt.close()
 
 
 if __name__ == "__main__":
-
-    # # Test config files with small N, verify config file is correctly configured
-    # print("\n--------------------------------------------------------------------------------------")
-    # print("Running test on config file with small N to verify config file is correctly configured.")
-    # print("--------------------------------------------------------------------------------------\n")
-    # sleep(2)
-    # config = Path("config.json")
-    # with open(config, "r") as f:
-    #     config = load(f)
-    # temp_config = config.copy()
-    # temp_config["drop_profiles"]["N"] = 10
-    # temp_config["image_parameters"]["N"] = 10
-    # temp_config["model_parameters"]["batch_size"] = 1
-    # temp_config["model_parameters"]["epochs"] = 1
-    # generate_data(temp_config)
-    # rmtree(temp_config["directory"])
-
-    # Generate data on real config file
     print("\n--------------------------------------------------------------------------------------")
-    print("Generating data on real configuration file.")
+    print("Generating data from config.json")
     print("--------------------------------------------------------------------------------------\n")
     sleep(2)
     config = Path("config.json")

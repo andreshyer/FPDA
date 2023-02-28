@@ -9,7 +9,7 @@
     "image_parameters": {
         "img_size_pix": 128,
         "rotation_range_degrees": [-10, 10],
-        "drop_scale_range": [0.5, 1],
+        "drop_scale_range": [0.95, 1],
         "N": 1e6
     },
     "model_parameters": {

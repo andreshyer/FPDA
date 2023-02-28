@@ -3,7 +3,7 @@ from random import randrange
 
 from numpy import array, arange, concatenate, dot, where, unique, zeros, sin, cos
 from numpy.random import rand
-from cv2 import blur, imshow, waitKey
+from cv2 import blur
 
 
 def new_drop_image(drop_profile, img_size_pix, rotation, drop_scale, noise, 
@@ -72,8 +72,12 @@ def new_drop_image(drop_profile, img_size_pix, rotation, drop_scale, noise,
         rand_matrix = where(rand_matrix < noise, 1, 0)
         rand_matrix = rand_matrix * 255
         drop_image = drop_image + rand_matrix
+        drop_image = where(drop_image > 255, 255, drop_image)
 
     # Blur image
     drop_image = blur(drop_image, (3, 3))
+
+    # Invert image
+    drop_image = 255 - drop_image
         
     return relative_drop_radius, drop_image

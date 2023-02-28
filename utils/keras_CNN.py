@@ -13,23 +13,20 @@ from keras.layers import Conv2D, MaxPool2D, Flatten, Dense, Dropout
 from .backends.misc import name_to_parameters
 
 
-def name_to_y(file, y_keys):
+def name_to_y(file, y_key):
     file = Path(file)
     parameters = name_to_parameters(file)
-    y = []
-    for y_key in y_keys:
-        y.append(parameters[y_key])
-    return y
+    return parameters[y_key]
 
 
-def generate_y_scaler(train_files, y_keys):
+def generate_y_scaler(train_files, y_key):
 
     all_y = []
     for file in train_files:
-        all_y.append(name_to_y(file=file, y_keys=y_keys))
+        all_y.append(name_to_y(file=file, y_key=y_key))
     
     y_scaler = MinMaxScaler()
-    y_scaler.fit_transform(all_y)
+    y_scaler.fit_transform(array(all_y).reshape(-1, 1))
 
     return y_scaler
 
@@ -46,10 +43,10 @@ def img_file_to_img(file):
 
 class DataGenerator(Sequence):
 
-    def __init__(self, files, y_scaler, y_keys, batch_size):
+    def __init__(self, files, y_scaler, y_key, batch_size):
         self.files = files
         self.y_scaler = y_scaler
-        self.y_keys = y_keys
+        self.y_key = y_key
         self.batch_size = batch_size
 
         self.len_files = len(self.files)
@@ -70,15 +67,15 @@ class DataGenerator(Sequence):
         y = []
         for file in batch_files:
             x.append(img_file_to_img(file))
-            y.append(name_to_y(file=file, y_keys=self.y_keys))
+            y.append(name_to_y(file=file, y_key=self.y_key))
 
         x = array(x)
-        y = self.y_scaler.transform(y)
+        y = self.y_scaler.transform(array(y).reshape(-1, 1))
 
         return x, y
 
 
-def simple_model(len_y_keys):
+def simple_model():
     model = Sequential()
     model.add(Conv2D(16, kernel_size=3, activation='relu'))
     model.add(MaxPool2D(pool_size=2))
@@ -87,32 +84,27 @@ def simple_model(len_y_keys):
     model.add(Flatten())
     model.add(Dense(64))
     model.add(Dropout(0.2))
-    model.add(Dense(len_y_keys))
+    model.add(Dense(1))
     model.compile(optimizer='Adam', loss='mae', metrics=['mse', 'mae'])
     return model
     
 
-def train(model_path, y_keys, epochs, batch_size):
-    
-    split = model_path / "split.json"
-    with open(split, "r") as f:
-        split = load(f)
+def train(split, y_key, epochs, batch_size):
 
-    y_scaler = generate_y_scaler(train_files=split["train"], y_keys=y_keys)
+    y_scaler = generate_y_scaler(train_files=split["train"], y_key=y_key)
 
-    train_generator = DataGenerator(files=split["train"], y_scaler=y_scaler, y_keys=y_keys, batch_size=batch_size)
-    val_generator = DataGenerator(files=split["val"], y_scaler=y_scaler, y_keys=y_keys, batch_size=batch_size)
+    train_generator = DataGenerator(files=split["train"], y_scaler=y_scaler, y_key=y_key, batch_size=batch_size)
+    val_generator = DataGenerator(files=split["val"], y_scaler=y_scaler, y_key=y_key, batch_size=batch_size)
 
-    model = simple_model(len_y_keys=len(y_keys))
+    model = simple_model()
     history = model.fit(train_generator, epochs=epochs, validation_data=val_generator, callbacks=Callback())
 
-    print(history.history)
     history_data = dict(loss=history.history['loss'], val_loss=history.history['val_loss'])
 
     return model, history_data, y_scaler
 
 
-def test(model, y_keys, y_scaler, y_files, batch_size):
+def test(model, y_key, y_scaler, y_files, batch_size):
 
     def _predict(b):
 
@@ -120,12 +112,16 @@ def test(model, y_keys, y_scaler, y_files, batch_size):
         y = []
         for file in b:
             x.append(img_file_to_img(file))
-            y.append(name_to_y(file=file, y_keys=y_keys))
+            y.append(name_to_y(file=file, y_key=y_key))
         x = array(x)
-        y_norm = y_scaler.transform(y)
+        y_norm = y_scaler.transform(array(y).reshape(-1, 1))
 
         y_pred_norm = model.predict(x)
         y_pred = y_scaler.inverse_transform(y_pred_norm)
+
+        y_norm = y_norm.flatten()
+        y_pred_norm = y_pred_norm.flatten()
+        y_pred = y_pred.flatten()
 
         for i, y_norm_i in enumerate(y_norm):
             y_pred_norm_i = y_pred_norm[i]
