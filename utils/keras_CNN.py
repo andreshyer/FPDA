@@ -2,6 +2,7 @@ from pathlib import Path
 from json import load
 from random import shuffle
 
+from tqdm import tqdm
 from cv2 import imread, cvtColor, COLOR_BGR2GRAY
 from numpy import array, reshape, expand_dims
 from sklearn.preprocessing import MinMaxScaler
@@ -24,7 +25,7 @@ def generate_y_scaler(train_files, y_key):
     all_y = []
     for file in train_files:
         all_y.append(name_to_y(file=file, y_key=y_key))
-    
+
     y_scaler = MinMaxScaler()
     y_scaler.fit_transform(array(all_y).reshape(-1, 1))
 
@@ -76,6 +77,7 @@ class DataGenerator(Sequence):
 
 
 def simple_model():
+    # Same model structure that all models use
     model = Sequential()
     model.add(Conv2D(16, kernel_size=3, activation='relu'))
     model.add(MaxPool2D(pool_size=2))
@@ -99,6 +101,7 @@ def train(split, y_key, epochs, batch_size):
     model = simple_model()
     history = model.fit(train_generator, epochs=epochs, validation_data=val_generator, callbacks=Callback())
 
+    # Only keep loss and val_loss from history
     history_data = dict(loss=history.history['loss'], val_loss=history.history['val_loss'])
 
     return model, history_data, y_scaler
@@ -108,25 +111,30 @@ def test(model, y_key, y_scaler, y_files, batch_size):
 
     def _predict(b):
 
+        # Gather x and y data in files
         x = []
         y = []
         for file in b:
             x.append(img_file_to_img(file))
             y.append(name_to_y(file=file, y_key=y_key))
         x = array(x)
+
+        # Normalize y data
         y_norm = y_scaler.transform(array(y).reshape(-1, 1))
 
-        y_pred_norm = model.predict(x)
+        # Predict property
+        y_pred_norm = model.predict(x, verbose=0)
         y_pred = y_scaler.inverse_transform(y_pred_norm)
 
+        # Flatten y data
         y_norm = y_norm.flatten()
         y_pred_norm = y_pred_norm.flatten()
         y_pred = y_pred.flatten()
 
+        # Update PVA data
         for i, y_norm_i in enumerate(y_norm):
             y_pred_norm_i = y_pred_norm[i]
             pva_norm.append([y_norm_i, y_pred_norm_i])
-
         for i, y_i in enumerate(y):
             y_pred_i = y_pred[i]
             pva.append([y_i, y_pred_i])
@@ -134,8 +142,9 @@ def test(model, y_key, y_scaler, y_files, batch_size):
     pva = []
     pva_norm = []
 
+    # Predict on files in batches
     batch = []
-    for file in y_files:
+    for file in tqdm(y_files, desc=f"Predicting {y_key}"):
         batch.append(file)
         if len(batch) == batch_size:
             _predict(batch)

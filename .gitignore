@@ -160,6 +160,15 @@ cython_debug/
 #.idea/
 
 # Data Folder
-data/
+data/drop_images
+data/drop_profiles
+data/models/capillary
+data/models/capillary_top
+data/models/noise
+data/models/noise_capillary
+data/models/noise_capillary_top
+data/models/noise_top
+data/models/top
+data/models/control/split.json
 
 .vscode/
