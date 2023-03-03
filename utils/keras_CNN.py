@@ -153,3 +153,7 @@ def test(model, y_key, y_scaler, y_files, batch_size):
         _predict(batch)
 
     return array(pva_norm), array(pva)
+
+
+def predict(imgs: list, parameter: str, group: str):
+    pass

@@ -119,9 +119,6 @@ def extract_drop_profile(img_path, thres):
     points = points[points[:, 0] < points[:, 0].max()]
     points = points[points[:, 1] < points[:, 1].max()]
 
-    # Normalize points from drop radius
-    points = points / points[:, 0].max()
-
     # Flip axis
     points[:, 1] = - points[:, 1]
     points[:, 1] = points[:, 1] - points[:, 1].min()
@@ -130,5 +127,9 @@ def extract_drop_profile(img_path, thres):
     idx, _ = where(points == points[:, 1].min())
     cutoff_index = min(idx)
     points = points[:cutoff_index]
+    points[:, 0] = points[:, 0] - points[:, 0].min()
+
+    # Normalize points from drop radius
+    points = points / points[:, 0].max()
 
     return points
