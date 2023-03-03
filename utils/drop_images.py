@@ -3,7 +3,8 @@ from random import randrange
 
 from numpy import array, arange, concatenate, dot, where, unique, zeros, sin, cos
 from numpy.random import rand
-from cv2 import blur
+from cv2 import blur, imread, cvtColor, COLOR_BGR2GRAY
+from cv2 import copyMakeBorder, BORDER_CONSTANT, threshold, THRESH_BINARY, findContours, RETR_EXTERNAL, CHAIN_APPROX_NONE, drawContours
 
 
 def new_drop_image(drop_profile, img_size_pix, rotation, drop_scale, noise, 
@@ -81,3 +82,53 @@ def new_drop_image(drop_profile, img_size_pix, rotation, drop_scale, noise,
     drop_image = 255 - drop_image
         
     return relative_drop_radius, drop_image
+
+
+def extract_drop_profile(img_path, thres):
+
+    # Read img
+    img = imread(str(img_path))
+    img = cvtColor(img, COLOR_BGR2GRAY)
+
+    # Threshold image
+    _, img = threshold(img, thres, 255, THRESH_BINARY)
+
+    # Find contours
+    contours, hierarchy = findContours(img, RETR_EXTERNAL, CHAIN_APPROX_NONE)
+
+    # Find largest contours (In terms of number of pixels in contour)
+    largest_index = 0
+    largest = 0
+    for i, c in enumerate(contours):
+        len_c = len(c)
+        if len_c + largest:
+            largest = len_c
+            largest_index = i
+
+    # Get points from contour
+    contour = contours[largest_index]
+    points = []
+    for point in contour:
+        point = point[0]
+        points.append([point[0], point[1]])
+    points = array(points)
+
+    # Drop border pixels
+    points = points[points[:, 0] > 0]
+    points = points[points[:, 1] > 0]
+    points = points[points[:, 0] < points[:, 0].max()]
+    points = points[points[:, 1] < points[:, 1].max()]
+
+    # Normalize points from drop radius
+    points = points / points[:, 0].max()
+
+    # Flip axis
+    points[:, 1] = - points[:, 1]
+    points[:, 1] = points[:, 1] - points[:, 1].min()
+
+    # Cut drop off at min point in x-axis
+    idx, _ = where(points == points[:, 1].min())
+    cutoff_index = min(idx)
+    points = points[:cutoff_index]
+
+    return points
