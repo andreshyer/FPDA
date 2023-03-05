@@ -4,7 +4,7 @@ from random import randrange
 from numpy import array, arange, concatenate, dot, where, unique, zeros, sin, cos
 from numpy.random import rand
 from cv2 import blur, imread, cvtColor, COLOR_BGR2GRAY
-from cv2 import copyMakeBorder, BORDER_CONSTANT, threshold, THRESH_BINARY, findContours, RETR_EXTERNAL, CHAIN_APPROX_NONE, drawContours
+from cv2 import threshold, THRESH_BINARY, findContours, RETR_EXTERNAL, CHAIN_APPROX_NONE
 
 
 def new_drop_image(drop_profile, img_size_pix, rotation, drop_scale, noise, 

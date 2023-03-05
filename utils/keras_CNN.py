@@ -1,15 +1,16 @@
 from pathlib import Path
-from json import load
 from random import shuffle
 
 from tqdm import tqdm
 from cv2 import imread, cvtColor, COLOR_BGR2GRAY
-from numpy import array, reshape, expand_dims
+from numpy import array, expand_dims
 from sklearn.preprocessing import MinMaxScaler
 from keras.utils import Sequence
 from keras.models import Sequential
 from keras.callbacks import Callback
 from keras.layers import Conv2D, MaxPool2D, Flatten, Dense, Dropout
+from keras.models import load_model
+from joblib import load as joblib_load
 
 from .backends.misc import name_to_parameters
 
@@ -155,5 +156,24 @@ def test(model, y_key, y_scaler, y_files, batch_size):
     return array(pva_norm), array(pva)
 
 
-def predict(imgs: list, parameter: str, group: str):
-    pass
+def default_predict(img_files: list, parameter: str):
+    
+    # Load scaler from control model
+    scaler_path = Path(__file__).parent.parent / f"data/models/control/{parameter}/y_scaler.save"
+    with open(scaler_path, "rb") as f:
+        scaler = joblib_load(f)
+
+    # Load control model
+    model = load_model(Path(__file__).parent.parent / f"data/models/control/{parameter}/model")
+
+    # Load images
+    imgs = []
+    for img in img_files:
+        imgs.append(img_file_to_img(img))
+    imgs = array(imgs)
+
+    # Make predictions
+    pred = model.predict(imgs, verbose=0)
+    pred = scaler.inverse_transform(pred).flatten()
+
+    return pred
