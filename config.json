@@ -42,7 +42,7 @@
         },
         {
             "name": "top",
-            "noise": 0.01,
+            "noise": 0,
             "rel_capillary_height_range": [0, 0],
             "prob_capillary_zero": 1,
             "only_keep_drop_above_apex": true
