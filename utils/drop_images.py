@@ -135,8 +135,4 @@ def extract_drop_profile(img_path, thres):
     points[:, 0] = points[:, 0] - points[:, 0].min()
     points[:, 1] = points[:, 1] - points[:, 1].min()
 
-    # Drop duplicate z points
-    points = points[unique(points[:, 1], return_index=True)[1]]
-    points = points[points[:, 1].argsort()]
-
     return points
