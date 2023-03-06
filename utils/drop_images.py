@@ -1,7 +1,7 @@
 from math import radians
 from random import randrange
 
-from numpy import array, arange, concatenate, dot, where, unique, zeros, sin, cos
+from numpy import array, arange, concatenate, dot, where, unique, zeros, sin, cos, unique
 from numpy.random import rand
 from cv2 import blur, imread, cvtColor, COLOR_BGR2GRAY
 from cv2 import threshold, THRESH_BINARY, findContours, RETR_EXTERNAL, CHAIN_APPROX_NONE
@@ -127,9 +127,16 @@ def extract_drop_profile(img_path, thres):
     idx, _ = where(points == points[:, 1].min())
     cutoff_index = min(idx)
     points = points[:cutoff_index]
-    points[:, 0] = points[:, 0] - points[:, 0].min()
 
     # Normalize points from drop radius
     points = points / points[:, 0].max()
+
+    # Shift drop
+    points[:, 0] = points[:, 0] - points[:, 0].min()
+    points[:, 1] = points[:, 1] - points[:, 1].min()
+
+    # Drop duplicate z points
+    points = points[unique(points[:, 1], return_index=True)[1]]
+    points = points[points[:, 1].argsort()]
 
     return points
