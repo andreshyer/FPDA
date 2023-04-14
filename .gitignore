@@ -159,6 +159,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+# Dev file
+dev.py
+
 # Data Folder
 data/drop_images
 data/drop_profiles

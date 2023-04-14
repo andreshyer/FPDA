@@ -96,14 +96,18 @@ def train(split, y_key, epochs, batch_size):
 
     y_scaler = generate_y_scaler(train_files=split["train"], y_key=y_key)
 
-    train_generator = DataGenerator(files=split["train"], y_scaler=y_scaler, y_key=y_key, batch_size=batch_size)
-    val_generator = DataGenerator(files=split["val"], y_scaler=y_scaler, y_key=y_key, batch_size=batch_size)
+    train_generator = DataGenerator(files=split["train"], y_scaler=y_scaler, 
+                                    y_key=y_key, batch_size=batch_size)
+    val_generator = DataGenerator(files=split["val"], y_scaler=y_scaler, 
+                                  y_key=y_key, batch_size=batch_size)
 
     model = simple_model()
-    history = model.fit(train_generator, epochs=epochs, validation_data=val_generator, callbacks=Callback())
+    history = model.fit(train_generator, epochs=epochs, validation_data=val_generator, 
+                        callbacks=Callback())
 
     # Only keep loss and val_loss from history
-    history_data = dict(loss=history.history['loss'], val_loss=history.history['val_loss'])
+    history_data = dict(loss=history.history['loss'], 
+                        val_loss=history.history['val_loss'])
 
     return model, history_data, y_scaler
 
@@ -159,12 +163,14 @@ def test(model, y_key, y_scaler, y_files, batch_size):
 def default_predict(img_files: list, parameter: str):
     
     # Load scaler from control model
-    scaler_path = Path(__file__).parent.parent / f"data/models/control/{parameter}/y_scaler.save"
+    scaler_path = Path(__file__).parent.parent 
+    scaler_path = scaler_path / f"data/models/control/{parameter}/y_scaler.save"
     with open(scaler_path, "rb") as f:
         scaler = joblib_load(f)
 
     # Load control model
-    model = load_model(Path(__file__).parent.parent / f"data/models/control/{parameter}/model")
+    model_path = Path(__file__).parent.parent / f"data/models/control/{parameter}/model"
+    model = load_model(model_path)
 
     # Load images
     imgs = []
