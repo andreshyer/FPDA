@@ -1,0 +1,13 @@
+name: drop
+channels:
+  - defaults
+dependencies:
+  - tqdm
+  - numpy
+  - matplotlib
+  - scipy
+  - scikit-learn
+  - pip
+  - pip:
+      - tensorflow
+      - opencv-python
