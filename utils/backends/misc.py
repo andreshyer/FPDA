@@ -1,4 +1,3 @@
-
 def parameters_to_name(parameters, suffix):
     name = ""
     for key, value in parameters.items():

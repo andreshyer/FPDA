@@ -4,7 +4,6 @@ from scipy.integrate import odeint
 
 
 def new_drop_profile(bond_number, max_worthington_number, delta_s):
-
     # Calculate baseline drop profile
     def pendant_drop(y, s):
         x, z, phi = y
@@ -12,6 +11,7 @@ def new_drop_profile(bond_number, max_worthington_number, delta_s):
         d_z = sin(phi)
         d_phi = 2 - bond_number * z - sin(phi) / x
         return d_x, d_z, d_phi
+
     x0, z0, phi0 = delta_s, 0, delta_s
     s_range = arange(delta_s, 4, delta_s)
     sol = odeint(pendant_drop, (x0, z0, phi0), s_range)
@@ -41,7 +41,7 @@ def new_drop_profile(bond_number, max_worthington_number, delta_s):
             max_drop_radius = x
 
         worthington_number = bond_number * (volume / (pi * cap_diameter * (max_drop_radius ** 2)))
-        
+
         if worthington_number > max_worthington_number:
             break
 
@@ -53,11 +53,11 @@ def new_drop_profile(bond_number, max_worthington_number, delta_s):
 
     # Normalize parameters
     drop_parameters = dict(
-        volume = volume / (pi * cap_diameter * (max_drop_radius ** 2)),
-        area = area / (pi * cap_diameter * max_drop_radius),
-        cap_diameter = cap_diameter / max_drop_radius,
-        worthington_number = worthington_number,
-        bond_number = bond_number,
+        volume=volume / (pi * cap_diameter * (max_drop_radius ** 2)),
+        area=area / (pi * cap_diameter * max_drop_radius),
+        cap_diameter=cap_diameter / max_drop_radius,
+        worthington_number=worthington_number,
+        bond_number=bond_number,
     )
 
     return drop_parameters, sol

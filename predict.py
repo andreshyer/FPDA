@@ -29,8 +29,8 @@ def trad_predict(drop_profile):
         f = UnivariateSpline(pred_z, pred_x, s=0)
 
         # Calculate error between profiles
-        error = sum(abs(true_x - f(true_z)))
-        return error
+        error_mse = sum(abs(true_x - f(true_z)))
+        return error_mse
 
     bond_number = minimize(error, 0.2, bounds=[(0.1, 0.35)], method='L-BFGS-B', options={'maxiter': 100}).x[0]
     return bond_number
@@ -73,20 +73,19 @@ def cnn():
             i = 0
 
 
-
 if __name__ == "__main__":
     
-    # # Predict Bo from traditional method
+    # Predict Bo from traditional method
     start_time = default_timer()
     traditional()
     end_time = default_timer()
     traditional_time = end_time - start_time
 
     # Predict Bo from CNN method
-    # start_time = default_timer()
-    # cnn()
-    # end_time = default_timer()
-    # cnn_time = end_time - start_time
+    start_time = default_timer()
+    cnn()
+    end_time = default_timer()
+    cnn_time = end_time - start_time
 
-    # print(f"Time needed for traditional method: {traditional_time}")
-    # print(f"Time needed for CNN method: {cnn_time}")
+    print(f"Time needed for traditional method: {traditional_time}")
+    print(f"Time needed for CNN method: {cnn_time}")

@@ -110,7 +110,7 @@ def generate_data(c):
             dump(model_split, f, default=str, indent=4)
 
     # Train models, and test on numerically generated data test set
-    all_y_keys = ["bond_number", "volume", "area", "cap_diameter" , "drop_radius"]
+    all_y_keys = ["bond_number", "volume", "area", "cap_diameter", "drop_radius"]
     for model in c["models"]: 
 
         # Define directories
@@ -135,7 +135,8 @@ def generate_data(c):
                                                         )
             
             # Generate Predicted vs Actual data
-            normalized_pva, pva = test(model=keras_model, y_key=y_key, y_scaler=y_scaler, y_files=data_split["test"], batch_size=c["model_parameters"]["batch_size"])
+            normalized_pva, pva = test(model=keras_model, y_key=y_key, y_scaler=y_scaler, y_files=data_split["test"],
+                                       batch_size=c["model_parameters"]["batch_size"])
 
             # Save data
             with open(key_model_path / "y_scaler.save", "wb") as f:
