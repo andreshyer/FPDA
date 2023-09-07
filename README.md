@@ -7,19 +7,23 @@ given a drop profile or drop image of a pendant drop.
 
 `["bond_number", "volume", "area", "cap_diameter", "drop_radius"]`
 
-Each of these parameters have been made non-dimensionless by `$R_0$` and `$D_n$`,
+Each of these parameters have been made non-dimensionless by $R_0$ and $D_n$,
 which is the radius of curvature at the drop apex and the diameter of the capillary tip
 respectfully. The dimensionless properties that are predicted are scaled as follows.
 
-`$Bond Number = \frac{\Delta \rho g R_0^2}{\gamma}$`
+$$\text{Bond Number} = \frac{\Delta \rho g R_0^2}{\gamma}$$
 
-`$Volume = \frac{V_d}{\pi D_n R_0^2}$`
+$$\text{Volume} = \frac{V_d}{\pi D_n R_0^2}$$
 
-`$Area = \frac{A_d}{\pi D_n R_0}$`
+$$\text{Area} = \frac{A_d}{\pi D_n R_0}$$
 
-`$Capillary Diameter = \frac{D_n}{R_0}$`
+$$\text{Capillary Diameter} = \frac{D_n}{R_0}$$
 
-`$Radius of Drop at Apex = \frac{R_0}{c}$`
+The radius of the drop at the apex can also be predicted.
+
+$$\text{Radius of Drop at Apex} = \frac{R_0 \text{ (m)}}{c \text{ (m)}} = \frac{R_0 \text{ (pix)}}{c \text{ (pix)}}$$
+
+Where $c$ is the length scale, and can be calculated from any known reference point.
 
 ## Predicting
 
