@@ -7,9 +7,9 @@ given a drop profile or drop image of a pendant drop.
 
 `["bond_number", "volume", "area", "cap_diameter", "drop_radius"]`
 
-Each of these parameters have been made non-dimensionless by $R_0$ and $D_n$,
+Each of these parameters have been made dimensionless by `$R_0$` and `$D_n$`,
 which is the radius of curvature at the drop apex and the diameter of the capillary tip
-respectfully. The dimensionless properties that are predicted are scaled as follows.
+respectively. The dimensionless properties that are predicted are scaled as follows.
 
 $$\text{Bond Number} = \frac{\Delta \rho g R_0^2}{\gamma}$$
 
@@ -33,9 +33,9 @@ But, it does show the structure of predicting using the code provided.
 
 ## Full dataset
 
-This repo is meant to be a minimum example to allowing for predicting drop properties,
-with pre-trained models. The full dataset can be accessed one 
-[Dropbox](https://www.dropbox.com/scl/fo/et7ujrw9nbjwn87ts4qao/h?rlkey=dynzo8riobe2k9hf8q9df76cl&dl=0), 
+This repo is meant to be a minimal example to allow for predicting drop properties,
+with pre-trained models. The full dataset can be accessed on 
+[Dropbox](https://www.dropbox.com/scl/fi/ykettma07e3ag53ywnso4/data.zip?rlkey=86ppnivp2xdr6jal4aqypnh1g&dl=0), 
 where the data is compressed. 
 The data folder in this repo should be replaced with the decompressed data folder from Dropbox.
 Alternatively, all the data can be generated from scratch using `generate_data.py`,
@@ -45,7 +45,7 @@ properties can be modified in `config.json`.
 
 ## Environment
 
-The easiest way to get a working environment is to use anaconda or miniconda,
+The easiest way to get a working environment is to use Anaconda or Miniconda,
 running the following in the `environment` directory using the terminal (Linux/macOS) 
 or Anaconda Prompt (Windows).
 
