@@ -174,4 +174,6 @@ data/models/noise_top
 data/models/top
 data/models/control/split.json
 
+drops/prfs
+
 .vscode/

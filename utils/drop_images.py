@@ -12,7 +12,7 @@ def new_drop_image(drop_profile, img_size_pix, rotation, drop_scale, noise,
 
     # Grab drop radius
     relative_drop_radius = drop_profile[:, 0].max()
-    
+
     # Add capillary tip
     if rel_capillary_height != 0:
         max_z_index = drop_profile[:, 1].argmax()
@@ -37,14 +37,15 @@ def new_drop_image(drop_profile, img_size_pix, rotation, drop_scale, noise,
     rotation = radians(rotation)
     rotation_matrix = array([[cos(rotation), sin(rotation)], [-sin(rotation), cos(rotation)]])
     drop_profile = dot(drop_profile, rotation_matrix.T)
-    relative_drop_radius = relative_drop_radius * cos(rotation)
 
     # Scale drop to image size
     drop_profile[:, 0] = drop_profile[:, 0] - drop_profile[:, 0].min()
     drop_profile[:, 1] = drop_profile[:, 1] - drop_profile[:, 1].min()
     max_length_scale = max(drop_profile.max(axis=0))
-    scaler_factor = img_size_pix * drop_scale / max_length_scale
+    scaler_factor = (img_size_pix - 1) * drop_scale / max_length_scale
     drop_profile = drop_profile * scaler_factor
+
+    relative_drop_radius = relative_drop_radius * cos(rotation)
     relative_drop_radius = relative_drop_radius * scaler_factor / img_size_pix
 
     # Drop duplicate rows
@@ -96,7 +97,7 @@ def extract_drop_profile(img_path, thres):
     # Find contours
     contours, hierarchy = findContours(img, RETR_EXTERNAL, CHAIN_APPROX_NONE)
 
-    # Find largest contours (In terms of number of pixels in contour)
+    # Find the largest contours (In terms of number of pixels in contour)
     largest_index = 0
     largest = 0
     for i, c in enumerate(contours):

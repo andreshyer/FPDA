@@ -27,9 +27,9 @@ Where $c$ is the length scale, and can be calculated from any known reference po
 
 ## Predicting
 
-An example of how to predict properties can be seen in `predict.py`,
-although the current prediction script will not work without data.
-But, it does show the structure of predicting using the code provided.
+An example of how to predict properties from experimental drop profiles can be seen in `validate.py`.
+The full generated dataset is predicted in`predict.py`,
+although the full dataset must be downloaded first.
 
 ## Full dataset
 
