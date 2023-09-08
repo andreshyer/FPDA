@@ -7,7 +7,7 @@ given a drop profile or drop image of a pendant drop.
 
 `["bond_number", "volume", "area", "cap_diameter", "drop_radius"]`
 
-Each of these parameters have been made dimensionless by `$R_0$` and `$D_n$`,
+Each of these parameters have been made dimensionless by $R_0$ and $D_n$,
 which is the radius of curvature at the drop apex and the diameter of the capillary tip
 respectively. The dimensionless properties that are predicted are scaled as follows.
 
