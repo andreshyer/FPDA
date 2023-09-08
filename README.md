@@ -64,7 +64,7 @@ dependencies:
   - numpy
   - matplotlib
   - scipy
-  - scikit-learn
+  - scikit-learn=1.2.0
   - pip
   - pip:
       - tensorflow
