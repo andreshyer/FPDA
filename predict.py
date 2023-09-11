@@ -1,9 +1,8 @@
-
 from os import listdir
 from pathlib import Path
 from tqdm import tqdm
 from timeit import default_timer
-from numpy import array, loadtxt, argsort, mean
+from numpy import array, loadtxt, argsort, mean, pi, sqrt
 from multiprocessing import Pool, cpu_count
 from scipy.optimize import minimize
 from scipy.interpolate import UnivariateSpline
@@ -16,7 +15,6 @@ from utils.keras_CNN import default_predict
 
 
 def trad_predict(y):
-
     file, output_dir = y
 
     # Load drop profile
@@ -58,7 +56,7 @@ def trad_predict(y):
         fig, ax = plt.subplots(1, 3, figsize=(12, 5))
 
         _, drop_image = new_drop_image(drop_profile, img_size_pix=256, rotation=0, drop_scale=1, noise=0,
-                                       rel_capillary_height=0, above_apex=False, delta_s=1-3, shift=False)
+                                       rel_capillary_height=0, above_apex=False, delta_s=1 - 3, shift=False)
 
         ax[0].imshow(drop_image, cmap="gray")
         ax[0].set_xticks([])
@@ -79,7 +77,7 @@ def trad_predict(y):
 
         z_bin = []
         prediction_error_bin = []
-        bin_index = int(0.01*len(t_z))
+        bin_index = int(0.01 * len(t_z))
 
         zi_bin = []
         for i, zi in enumerate(t_z):
@@ -135,6 +133,57 @@ def traditional(root_dir_path, output_dir=None, return_results=False):
         return results
 
 
+def predict_other_parameters(root_dir_path, parameter, return_results=True):
+    files = listdir(root_dir_path)
+    results = []
+    for file in tqdm(files, total=len(files), desc="Traditional"):
+
+        drop_profile = loadtxt(root_dir_path / file, delimiter=",")
+
+        # Calculate drop parameter
+        volume = 0
+        area = 0
+        max_drop_radius = 0
+        cap_diameter = 0
+
+        for i in range(1, len(drop_profile)):
+            row = drop_profile[i]
+            x, z = row
+            x0, z0 = drop_profile[i - 1]
+
+            delta_z = abs(z - z0)
+            delta_x = abs(x - x0)
+            delta_s = sqrt(delta_x ** 2 + delta_z ** 2)
+
+            volume += pi * (x ** 2) * delta_z
+            area += 2 * pi * x * delta_s
+            cap_diameter = 2 * x
+
+            if x > max_drop_radius:
+                max_drop_radius = x
+
+        volume = volume / (pi * cap_diameter * (max_drop_radius ** 2))
+        area = area / (pi * cap_diameter * max_drop_radius)
+        cap_diameter = cap_diameter / max_drop_radius
+
+        if return_results:
+
+            if parameter == "cap_diameter":
+                results.append([file, cap_diameter])
+
+            elif parameter == "volume":
+                results.append([file, volume])
+
+            elif parameter == "area":
+                results.append([file, area])
+
+            else:
+                raise ValueError(f"Parameter: {parameter} not defined")
+
+    if return_results:
+        return results
+
+
 def cnn(root_dir_path, parameter="bond_number", return_results=True):
     # Number of files to process at once
     batch_size = 2000
@@ -163,9 +212,8 @@ def cnn(root_dir_path, parameter="bond_number", return_results=True):
 
 
 if __name__ == "__main__":
-
     # For timing metrics
-    
+
     # Predict Bo from traditional method
     start_time = default_timer()
     traditional("data/drop_profiles", return_results=False)

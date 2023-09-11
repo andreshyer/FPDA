@@ -6,7 +6,7 @@ from matplotlib import use
 from numpy import loadtxt, mean, std, linspace
 
 from utils.drop_images import new_drop_image
-from predict import traditional, cnn
+from predict import traditional, cnn, predict_other_parameters
 
 use('TkAgg')
 
@@ -48,3 +48,23 @@ if __name__ == "__main__":
 
         print(f"({file_name}) Actual Bo: {true_Bo} | Predicted Bo: {mean(predicted_Bo)} | "
               f"Error Bo: {abs(mean(predicted_Bo) - true_Bo)} | STD Bo: {std(predicted_Bo)}")
+
+    other_parameters = ["cap_diameter", "volume", "area"]
+    for parameter in other_parameters:
+        true_values = predict_other_parameters(Path("drops/real_drop_profiles"), parameter=parameter, return_results=True)
+        predicted_values = cnn("drops/processed", parameter=parameter, return_results=True)
+
+        for f in true_values:
+            file_name = f[0].split(".")[0]
+            true_Bo = float(f[1])
+
+            predicted_Bo = []
+            for g in predicted_values:
+                predicted_file = g[0]
+                predicted_file_name = predicted_file.stem
+
+                if predicted_file_name.startswith(file_name):
+                    predicted_Bo.append(float(g[1]))
+
+            print(f"({file_name}) Actual {parameter}: {true_Bo} | Predicted {parameter}: {mean(predicted_Bo)} | "
+                  f"Error {parameter}: {abs(mean(predicted_Bo) - true_Bo)} | STD {parameter}: {std(predicted_Bo)}")

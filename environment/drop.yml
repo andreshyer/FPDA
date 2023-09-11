@@ -3,12 +3,12 @@ channels:
   - defaults
 dependencies:
   - python<=3.11
-  - tqdm
-  - numpy
-  - matplotlib
-  - scipy
+  - tqdm=4.65.0
+  - numpy=1.25.2
+  - matplotlib=3.7.2
+  - scipy=1.11.1
   - scikit-learn=1.2.0
-  - pip
+  - pip=23.2.1
   - pip:
-      - tensorflow
-      - opencv-python
+      - tensorflow==2.13.0
+      - opencv-python~=4.8.0.76
