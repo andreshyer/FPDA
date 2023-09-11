@@ -1,14 +1,13 @@
 from math import radians
 from random import randrange
 
-from numpy import array, arange, concatenate, dot, where, unique, zeros, sin, cos, unique
+from numpy import array, arange, concatenate, dot, where, zeros, sin, cos, unique
 from numpy.random import rand
-from cv2 import blur, imread, cvtColor, COLOR_BGR2GRAY
-from cv2 import threshold, THRESH_BINARY, findContours, RETR_EXTERNAL, CHAIN_APPROX_NONE
+from cv2 import blur
 
 
 def new_drop_image(drop_profile, img_size_pix, rotation, drop_scale, noise, 
-                   rel_capillary_height, above_apex, delta_s):
+                   rel_capillary_height, above_apex, delta_s, shift=True):
 
     # Grab drop radius
     relative_drop_radius = drop_profile[:, 0].max()
@@ -57,8 +56,13 @@ def new_drop_image(drop_profile, img_size_pix, rotation, drop_scale, noise,
     drop_profile[:, 1] = drop_profile[:, 1] - drop_profile[:, 1].min()
 
     # Shift drop in image
-    x_shift = randrange(0, img_size_pix - drop_profile[:, 0].max())
-    z_shift = randrange(0, img_size_pix - drop_profile[:, 1].max())
+    if shift:
+        x_shift = randrange(0, img_size_pix - drop_profile[:, 0].max())
+        z_shift = randrange(0, img_size_pix - drop_profile[:, 1].max())
+    else:
+        x_shift = (img_size_pix - drop_profile[:, 0].max()) / 2
+        z_shift = (img_size_pix - drop_profile[:, 1].max()) / 2
+
     drop_profile[:, 0] = drop_profile[:, 0] + x_shift
     drop_profile[:, 1] = drop_profile[:, 1] + z_shift
 
@@ -83,57 +87,3 @@ def new_drop_image(drop_profile, img_size_pix, rotation, drop_scale, noise,
     drop_image = 255 - drop_image
         
     return relative_drop_radius, drop_image
-
-
-def extract_drop_profile(img_path, thres):
-
-    # Read img
-    img = imread(str(img_path))
-    img = cvtColor(img, COLOR_BGR2GRAY)
-
-    # Threshold image
-    _, img = threshold(img, thres, 255, THRESH_BINARY)
-
-    # Find contours
-    contours, hierarchy = findContours(img, RETR_EXTERNAL, CHAIN_APPROX_NONE)
-
-    # Find the largest contours (In terms of number of pixels in contour)
-    largest_index = 0
-    largest = 0
-    for i, c in enumerate(contours):
-        len_c = len(c)
-        if len_c + largest:
-            largest = len_c
-            largest_index = i
-
-    # Get points from contour
-    contour = contours[largest_index]
-    points = []
-    for point in contour:
-        point = point[0]
-        points.append([point[0], point[1]])
-    points = array(points)
-
-    # Drop border pixels
-    points = points[points[:, 0] > 0]
-    points = points[points[:, 1] > 0]
-    points = points[points[:, 0] < points[:, 0].max()]
-    points = points[points[:, 1] < points[:, 1].max()]
-
-    # Flip axis
-    points[:, 1] = - points[:, 1]
-    points[:, 1] = points[:, 1] - points[:, 1].min()
-
-    # Cut drop off at min point in x-axis
-    idx, _ = where(points == points[:, 1].min())
-    cutoff_index = min(idx)
-    points = points[:cutoff_index]
-
-    # Normalize points from drop radius
-    points = points / points[:, 0].max()
-
-    # Shift drop
-    points[:, 0] = points[:, 0] - points[:, 0].min()
-    points[:, 1] = points[:, 1] - points[:, 1].min()
-
-    return points

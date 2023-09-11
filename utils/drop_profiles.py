@@ -5,11 +5,11 @@ from scipy.integrate import odeint
 
 def new_drop_profile(bond_number, max_worthington_number, delta_s):
     # Calculate baseline drop profile
-    def pendant_drop(y, s):
-        x, z, phi = y
-        d_x = cos(phi)
-        d_z = sin(phi)
-        d_phi = 2 - bond_number * z - sin(phi) / x
+    def pendant_drop(y, _):
+        xi, zi, phi_i = y
+        d_x = cos(phi_i)
+        d_z = sin(phi_i)
+        d_phi = 2 - bond_number * zi - sin(phi_i) / xi
         return d_x, d_z, d_phi
 
     x0, z0, phi0 = delta_s, 0, delta_s
@@ -25,6 +25,7 @@ def new_drop_profile(bond_number, max_worthington_number, delta_s):
     volume = 0
     area = 0
     max_drop_radius = 0
+    cap_diameter = 0
     worthington_number = 0
     upper_index = 0
 

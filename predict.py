@@ -3,7 +3,7 @@ from os import listdir
 from pathlib import Path
 from tqdm import tqdm
 from timeit import default_timer
-from numpy import array, loadtxt, where
+from numpy import array, loadtxt, argsort, mean
 from multiprocessing import Pool, cpu_count
 from scipy.optimize import minimize
 from scipy.interpolate import UnivariateSpline
@@ -11,6 +11,7 @@ from scipy.interpolate import UnivariateSpline
 from matplotlib import pyplot as plt
 
 from utils.drop_profiles import new_drop_profile
+from utils.drop_images import new_drop_image
 from utils.keras_CNN import default_predict
 
 
@@ -23,21 +24,22 @@ def trad_predict(y):
     true_x, true_z = drop_profile[:, 0], drop_profile[:, 1]
     true_max_x = true_x.max()
 
-    def error(Bo):
+    def error(bond_number_i):
 
         # Predict Bo
-        _, predicted_drop_profile = new_drop_profile(bond_number=Bo[0], max_worthington_number=1, delta_s=1e-3)
-        pred_x, pred_z = predicted_drop_profile[:, 0], predicted_drop_profile[:, 1]
-        pred_max_x = pred_x.max()
+        _, predicted_drop_profile_i = new_drop_profile(bond_number=bond_number_i[0],
+                                                       max_worthington_number=1, delta_s=1e-3)
+        predicted_x_i, predicted_z_i = predicted_drop_profile_i[:, 0], predicted_drop_profile_i[:, 1]
+        predicted_max_x_i = predicted_x_i.max()
 
         # Fit function
-        f = UnivariateSpline(pred_z, pred_x, s=0)
+        f_i = UnivariateSpline(predicted_z_i, predicted_x_i, s=0)
 
         # Scale drop profile
-        t_x, t_z = true_x * (pred_max_x / true_max_x), true_z * (pred_max_x / true_max_x)
+        t_x_i, t_z_i = true_x * (predicted_max_x_i / true_max_x), true_z * (predicted_max_x_i / true_max_x)
 
         # Calculate error between profiles
-        error_mse = sum(abs(t_x - f(t_z)))
+        error_mse = sum(abs(t_x_i - f_i(t_z_i)))
         return error_mse
 
     bond_number = minimize(error, array([0.35]), bounds=[(0.1, 0.4)], method='L-BFGS-B', options={'maxiter': 100}).x[0]
@@ -45,24 +47,57 @@ def trad_predict(y):
 
     if output_dir:
         _, predicted_drop_profile = new_drop_profile(bond_number=bond_number, max_worthington_number=1, delta_s=1e-3)
-        pred_x, pred_z = predicted_drop_profile[:, 0], predicted_drop_profile[:, 1]
-        pred_max_x = pred_x.max()
+        predicted_x, predicted_z = predicted_drop_profile[:, 0], predicted_drop_profile[:, 1]
+        predicted_max_x = predicted_x.max()
 
         # Fit function
-        f = UnivariateSpline(pred_z, pred_x, s=0)
+        f = UnivariateSpline(predicted_z, predicted_x, s=0)
 
-        t_x, t_z = true_x * (pred_max_x / true_max_x), true_z * (pred_max_x / true_max_x)
+        t_x, t_z = true_x * (predicted_max_x / true_max_x), true_z * (predicted_max_x / true_max_x)
 
-        fig, ax = plt.subplots(1, 2, figsize=(12, 5))
-        ax[0].plot(pred_x, pred_z, label="Theoretical")
-        ax[0].plot(t_x, t_z, label="Experimental")
-        ax[0].legend()
-        ax[0].set_aspect("equal")
-        ax[0].set_title(bond_number)
+        fig, ax = plt.subplots(1, 3, figsize=(12, 5))
 
-        error = t_x - f(t_z)
-        ax[1].scatter(t_z, error)
-        ax[1].set_title("Residual")
+        _, drop_image = new_drop_image(drop_profile, img_size_pix=256, rotation=0, drop_scale=1, noise=0,
+                                       rel_capillary_height=0, above_apex=False, delta_s=1-3, shift=False)
+
+        ax[0].imshow(drop_image, cmap="gray")
+        ax[0].set_xticks([])
+        ax[0].set_yticks([])
+
+        ax[1].plot(predicted_x, predicted_z, label="Theoretical")
+        ax[1].plot(t_x, t_z, label="Experimental")
+        # ax[1].legend()
+        ax[1].set_aspect("equal")
+        ax[1].set_xlabel("x")
+        ax[1].set_ylabel("z")
+
+        prediction_error = t_x - f(t_z)
+        indexes = argsort(t_z)
+
+        t_z = t_z[indexes]
+        prediction_error = prediction_error[indexes]
+
+        z_bin = []
+        prediction_error_bin = []
+        bin_index = int(0.01*len(t_z))
+
+        zi_bin = []
+        for i, zi in enumerate(t_z):
+            zi_bin.append(zi)
+            if i % bin_index == 0:
+                z_bin.append(mean(zi_bin))
+                zi_bin = []
+
+        prediction_i_error_bin = []
+        for i, error_i in enumerate(prediction_error):
+            prediction_i_error_bin.append(error_i)
+            if i % bin_index == 0:
+                prediction_error_bin.append(mean(prediction_i_error_bin))
+                prediction_i_error_bin = []
+
+        ax[2].scatter(z_bin, prediction_error_bin)
+        ax[2].set_ylabel("Residual")
+        ax[2].set_xlabel("z")
 
         plt.tight_layout()
         plt.savefig(output_dir / f"{file.stem}_{bond_number}.png")
@@ -70,79 +105,76 @@ def trad_predict(y):
     return bond_number
 
 
-def traditional(root_dir_path, output_dir=None, keep_results=False):
+def traditional(root_dir_path, output_dir=None, return_results=False):
     # Process from image maps directly
     root_dir = Path(root_dir_path)
     files = listdir(root_dir)
     cores = cpu_count()
-    N = len(files)
 
-    if keep_results:
-        results = []
-
+    results = []
     batch = []
     i = 0
-    for file in tqdm(files, total=N, desc="Traditional"):
+    for file in tqdm(files, total=len(files), desc="Traditional"):
         batch.append([root_dir / file, output_dir])
         i += 1
         if i == cores:
             # Process in parallel
             with Pool(cores) as p:
                 r = p.map(trad_predict, batch)
-                if keep_results:
+                if return_results:
                     results.extend(list(zip(batch, r)))
             batch = []
             i = 0
     if batch:
         with Pool(cores) as p:
             r = p.map(trad_predict, batch)
-            if keep_results:
+            if return_results:
                 results.extend(list(zip(batch, r)))
 
-    if keep_results:
+    if return_results:
         return results
 
 
-def cnn(root_dir_path, keep_results=False):
+def cnn(root_dir_path, parameter="bond_number", return_results=True):
     # Number of files to process at once
     batch_size = 2000
     root_dir = Path(root_dir_path)
     files = listdir(root_dir)
 
-    if keep_results:
-        results = []
-
+    results = []
     batch = []
     i = 0
     for file in tqdm(files, desc="CNN"):
         batch.append(root_dir / file)
         i += 1
         if i == batch_size:
-            r = default_predict(img_files=batch, parameter="bond_number").tolist()
-            if keep_results:
+            r = default_predict(img_files=batch, parameter=parameter).tolist()
+            if return_results:
                 results.extend(list(zip(batch, r)))
             batch = []
             i = 0
     if batch:
-        r = default_predict(img_files=batch, parameter="bond_number").tolist()
-        if keep_results:
+        r = default_predict(img_files=batch, parameter=parameter).tolist()
+        if return_results:
             results.extend(list(zip(batch, r)))
 
-    if keep_results:
+    if return_results:
         return results
 
 
 if __name__ == "__main__":
+
+    # For timing metrics
     
     # Predict Bo from traditional method
     start_time = default_timer()
-    traditional("data/drop_profiles")
+    traditional("data/drop_profiles", return_results=False)
     end_time = default_timer()
     traditional_time = end_time - start_time
 
     # Predict Bo from CNN method
     start_time = default_timer()
-    cnn("data/drop_images/control")
+    cnn("data/drop_images/control", return_results=False)
     end_time = default_timer()
     cnn_time = end_time - start_time
 

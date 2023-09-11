@@ -12,7 +12,7 @@ from keras.layers import Conv2D, MaxPool2D, Flatten, Dense, Dropout
 from keras.models import load_model
 from joblib import load as joblib_load
 
-from .backends.misc import name_to_parameters
+from . import name_to_parameters
 
 
 def name_to_y(file, y_key):
@@ -119,30 +119,30 @@ def test(model, y_key, y_scaler, y_files, batch_size):
         # Gather x and y data in files
         x = []
         y = []
-        for file in b:
-            x.append(img_file_to_img(file))
-            y.append(name_to_y(file=file, y_key=y_key))
+        for file_i in b:
+            x.append(img_file_to_img(file_i))
+            y.append(name_to_y(file=file_i, y_key=y_key))
         x = array(x)
 
         # Normalize y data
         y_norm = y_scaler.transform(array(y).reshape(-1, 1))
 
         # Predict property
-        y_pred_norm = model.predict(x, verbose=0)
-        y_pred = y_scaler.inverse_transform(y_pred_norm)
+        y_predicted_norm = model.predict(x, verbose=0)
+        y_predicted = y_scaler.inverse_transform(y_predicted_norm)
 
         # Flatten y data
         y_norm = y_norm.flatten()
-        y_pred_norm = y_pred_norm.flatten()
-        y_pred = y_pred.flatten()
+        y_predicted_norm = y_predicted_norm.flatten()
+        y_predicted = y_predicted.flatten()
 
         # Update PVA data
         for i, y_norm_i in enumerate(y_norm):
-            y_pred_norm_i = y_pred_norm[i]
-            pva_norm.append([y_norm_i, y_pred_norm_i])
+            y_predicted_norm_i = y_predicted_norm[i]
+            pva_norm.append([y_norm_i, y_predicted_norm_i])
         for i, y_i in enumerate(y):
-            y_pred_i = y_pred[i]
-            pva.append([y_i, y_pred_i])
+            y_predicted_i = y_predicted[i]
+            pva.append([y_i, y_predicted_i])
     
     pva = []
     pva_norm = []
@@ -173,13 +173,13 @@ def default_predict(img_files: list, parameter: str):
     model = load_model(model_path)
 
     # Load images
-    imgs = []
+    images = []
     for img in img_files:
-        imgs.append(img_file_to_img(img))
-    imgs = array(imgs)
+        images.append(img_file_to_img(img))
+    images = array(images)
 
     # Make predictions
-    pred = model.predict(imgs, verbose=0)
-    pred = scaler.inverse_transform(pred).flatten()
+    predicted = model.predict(images, verbose=0)
+    predicted = scaler.inverse_transform(predicted).flatten()
 
-    return pred
+    return predicted

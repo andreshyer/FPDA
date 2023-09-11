@@ -161,9 +161,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# Dev file
-dev.py
-
 # Data Folder
 data/drop_images
 data/drop_profiles
@@ -175,7 +172,5 @@ data/models/noise_capillary_top
 data/models/noise_top
 data/models/top
 data/models/control/split.json
-
-drops/prfs
 
 .vscode/
